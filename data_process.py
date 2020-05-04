@@ -89,7 +89,8 @@ if __name__ == "__main__":
     query = s1.recv().decode("UTF-8")
     while True:
         if query != "":
-            last_word = query.split()[-1]
+            query_words = query.split()
+            last_word = query_words[-1]
             aux = trie.search(last_word)
             if aux:
                 unigram = list()
@@ -109,7 +110,7 @@ if __name__ == "__main__":
                 bigram_finder = BigramCollocationFinder.from_words(vocabulary)
                 bigram_measures = BigramAssocMeasures()
                 results = 0
-                for i,j in bigram_finder.nbest(bigram_measures.pmi, 1000000):   
+                for i,j in bigram_finder.nbest(bigram_measures.pmi, 1000000):  
                     if i in unigram:
                         s1.send(i + " " + j)
                         results += 1
