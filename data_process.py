@@ -15,7 +15,7 @@ def connection():
 
 def get_contractions():
     global contractions
-    with open("/home/diego/Documents/Universidad/NLP/trabajo/contractions.json") as f:
+    with open("contractions.json") as f:
         contractions = json.load(f)
         for c,v in contractions.items():
             contractions[c] = v.split("/")
@@ -63,6 +63,7 @@ if __name__ == "__main__":
     connection()
     #Nos situamos en el directorio del dataset
     s1.send("Training")
+    get_contractions()
     os.chdir("info")
     # Cogemos los ficheros del dataset
     documents = os.listdir(".")
@@ -71,7 +72,6 @@ if __name__ == "__main__":
     bigram_freq = FreqDist()
     trigram_freq = FreqDist()
     vocabulary = list()
-    get_contractions()
     for d in documents:
         pre_document = get_document_tokenize(d)
         document = clean_document(pre_document) 

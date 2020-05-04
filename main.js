@@ -22,7 +22,7 @@ function connection(){
 }
 
 function createWindow () {
-    debug();
+    //debug();
     unhandled();
     contextMenu();
     win = new BrowserWindow({width: 1366, height: 768, webPreferences:{nodeIntegration: true}});  
