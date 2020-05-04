@@ -1,6 +1,6 @@
 # Star Wars Based AutoComplete
-Instalar las dependencias de Python (Python 3) con pip install -r requirements.txt
+## Instalación
+Ejecutar el fichero setup.sh
 
-Instalar dependencias de Node con npm install 
-
-Si al ejecutar da fallo de versión de Node, ejecutar lo siguiente: $(npm bin)/electron-rebuild
+## Ejecución
+npm start
