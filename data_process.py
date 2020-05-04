@@ -4,7 +4,6 @@ import string
 import json
 from nltk import *
 from trie import *
-from sklearn.metrics import f1_score
 from collections import defaultdict
 from io import StringIO
 from nanomsg import Socket, PAIR, PUB

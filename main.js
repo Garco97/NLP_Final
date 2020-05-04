@@ -33,7 +33,7 @@ ipcMain.on('asynchronous-message', (event, arg) => {
     pair.send(arg)
 });
 connection() 
-exec('python3 prenotebook.py', (error, stdout, stderr) =>{
+exec('python3 data_process.py', (error, stdout, stderr) =>{
       console.log(stdout);
 }); 
 
