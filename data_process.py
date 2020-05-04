@@ -20,17 +20,17 @@ def get_contractions():
         for c,v in contractions.items():
             contractions[c] = v.split("/")
             
-def replace_abreviations(sentence):
+def replace_contractions(sentence):
     for c,v in contractions.items():
         sentence = sentence.replace(c.lower(),v[0].lower(),100)
     return sentence
-def get_document_tokenize(path):
+def get_document_tokenized(path):
     f = open(path)
     words = list()
     for line in f:
         pre_line = line.strip().split('" "')
         if pre_line == ['"character', 'dialogue"']: continue
-        pre_line[2] = replace_abreviations(pre_line[2].lower())
+        pre_line[2] = replace_contractions(pre_line[2].lower())
         aux = word_tokenize(pre_line[2])
         aux = [word.lower() for word in aux]
         words += aux
@@ -51,14 +51,6 @@ def clean_document(document):
 def idf(word,stats):
     return math.log(stats.N() / stats[word])
 
-def predict_from_dataset(dataset, terms):
-    return [1 if term in dataset else 0 for term in terms]
-
-def baseline_unigram_predict(terms):
-    return predict_from_dataset(baseline_unigrams, terms)
-
-def pos_unigram_predict(terms):
-    return predict_from_dataset(pos_filtered_freqdist, terms)
 if __name__ == "__main__":
     connection()
     #Nos situamos en el directorio del dataset
@@ -73,7 +65,7 @@ if __name__ == "__main__":
     trigram_freq = FreqDist()
     vocabulary = list()
     for d in documents:
-        pre_document = get_document_tokenize(d)
+        pre_document = get_document_tokenized(d)
         document = clean_document(pre_document) 
         for word in document:
             unigram_freq[word] += 1  
