@@ -48,9 +48,6 @@ def clean_document(document):
             new_document.append(word)
     return new_document
 
-def idf(word,stats):
-    return math.log(stats.N() / stats[word])
-
 if __name__ == "__main__":
     connection()
     #Nos situamos en el directorio del dataset
@@ -60,21 +57,33 @@ if __name__ == "__main__":
     # Cogemos los ficheros del dataset
     documents = os.listdir(".")
     # Get all the data from all the characters
-    unigram_freq = FreqDist()
+    tf = defaultdict(lambda:FreqDist()) 
+    df = defaultdict(lambda:0) 
+    idf = defaultdict(lambda:0.0)
+    tf_idf = defaultdict(lambda:defaultdict(lambda:0.0))
     bigram_freq = FreqDist()
     trigram_freq = FreqDist()
-    vocabulary = list()
+    vocabulary = set()
+    words = list()
     for d in documents:
         pre_document = get_document_tokenized(d)
         document = clean_document(pre_document) 
         for word in document:
-            unigram_freq[word] += 1  
-            vocabulary.append(word)
+            tf[d][word] += 1  
+            vocabulary.add(word)
+            words.append(word)
         for bigram in ngrams(document,2):
             bigram_freq[bigram] += 1
         for trigram in ngrams(document,3):
             trigram_freq[trigram] += 1 
-
+    for d in documents:
+        for word in vocabulary:
+            if tf[d][word]:df[word] += 1
+    for word in vocabulary:
+        idf[word] = math.log10(len(documents)/df[word])
+    for d in documents:
+        for word in vocabulary:
+            if tf[d][word]: tf_idf[d][word] = (1+math.log10(tf[d][word])) * idf[word]
     trie = TrieSuggester()
     trie.index(vocabulary)
     s1.send("Training finished")
@@ -90,16 +99,21 @@ if __name__ == "__main__":
                     unigram.append(i)
                 #! Unigram
                 max_results = 7
-                tfs = FreqDist(unigram)
-                unigram.sort(key=lambda w: -(tfs[w] * idf(w, unigram_freq)) ,reverse=True)
-                unigram = unigram[:max_results]
+                unigram_sorted = list()
+                for word in unigram:
+                    word_value = 0
+                    for d in documents:
+                        if word_value < tf_idf[d][word]: word_value = tf_idf[d][word]
+                    unigram_sorted.append((word,word_value))   
+                unigram_sorted.sort(key=lambda tup: tup[1], reverse=True)                 
+                unigram_sorted = unigram_sorted[:max_results]
                 s1.send("unigram")
-                for uni in unigram:
-                    if uni != last_word:
-                        s1.send(uni)
-
+                unigram = list()
+                for word,value in unigram_sorted:
+                    s1.send(word)
+                    unigram.append(word)
                 #! Bigram
-                bigram_finder = BigramCollocationFinder.from_words(vocabulary)
+                bigram_finder = BigramCollocationFinder.from_words(words)
                 bigram_measures = BigramAssocMeasures()
                 results = 0
                 for i,j in bigram_finder.nbest(bigram_measures.pmi, 1000000):  
@@ -109,7 +123,7 @@ if __name__ == "__main__":
                     if results is max_results: break
                 
                 #! Trigram 
-                trigram_finder = TrigramCollocationFinder.from_words(vocabulary)
+                trigram_finder = TrigramCollocationFinder.from_words(words)
                 trigram_measures = TrigramAssocMeasures()
                 results = 0
                 for i,j,t in trigram_finder.nbest(trigram_measures.pmi, 1000000):   
