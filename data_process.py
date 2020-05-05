@@ -27,7 +27,8 @@ def get_document_tokenized(path):
     f = open(path)
     words = list()
     for line in f:
-        pre_line = line.strip().split('" "')
+        pre_line = line.replace(".", " ")
+        pre_line = pre_line.strip().split('" "')
         if pre_line == ['"character', 'dialogue"']: continue
         pre_line[2] = replace_contractions(pre_line[2].lower())
         aux = word_tokenize(pre_line[2])
@@ -40,7 +41,7 @@ def clean_document(document):
     for word in document: 
         bad = False  
         for punct in string.punctuation:
-            if punct in word or word in string.punctuation: 
+            if word in string.punctuation or punct in word: 
                 bad = True
                 break
         if not bad: 
@@ -83,6 +84,17 @@ if __name__ == "__main__":
     for d in documents:
         for word in vocabulary:
             if tf[d][word]: tf_idf[d][word] = (1+math.log10(tf[d][word])) * idf[word]
+
+    #! Get bigrams in order of PMI
+    bigram_finder = BigramCollocationFinder.from_words(words)
+    bigram_measures = BigramAssocMeasures()
+    best_bigrams = bigram_finder.nbest(bigram_measures.pmi, 1000000)
+
+    #! Get trigrams in order of PMI
+    trigram_finder = TrigramCollocationFinder.from_words(words)
+    trigram_measures = TrigramAssocMeasures()
+    best_trigrams = trigram_finder.nbest(trigram_measures.pmi, 1000000)
+
     trie = TrieSuggester()
     trie.index(vocabulary)
     s1.send("Training finished")
@@ -112,20 +124,16 @@ if __name__ == "__main__":
                     s1.send(word)
                     unigram.append(word)
                 #! Bigram
-                bigram_finder = BigramCollocationFinder.from_words(words)
-                bigram_measures = BigramAssocMeasures()
                 results = 0
-                for i,j in bigram_finder.nbest(bigram_measures.pmi, 1000000):  
+                for i,j in best_bigrams:  
                     if i in unigram:
                         s1.send(i + " " + j)
                         results += 1
                     if results is max_results: break
                 
                 #! Trigram 
-                trigram_finder = TrigramCollocationFinder.from_words(words)
-                trigram_measures = TrigramAssocMeasures()
                 results = 0
-                for i,j,t in trigram_finder.nbest(trigram_measures.pmi, 1000000):   
+                for i,j,t in best_trigrams:   
                     if i in unigram:
                         s1.send(i + " " + j + " " + t)
                         results += 1
