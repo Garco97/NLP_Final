@@ -5,7 +5,6 @@ import json
 from nltk import *
 from trie import *
 from collections import defaultdict
-from io import StringIO
 from nanomsg import Socket, PAIR, PUB
 
 def connection():
@@ -61,26 +60,26 @@ if __name__ == "__main__":
     df = defaultdict(lambda:0) 
     idf = defaultdict(lambda:0.0)
     tf_idf = defaultdict(lambda:defaultdict(lambda:0.0))
-    bigram_freq = FreqDist()
-    trigram_freq = FreqDist()
+
     vocabulary = set()
     words = list()
+    #! Gather all the words in the documents
     for d in documents:
         pre_document = get_document_tokenized(d)
         document = clean_document(pre_document) 
+        #! Get tf for every word in the documents
         for word in document:
             tf[d][word] += 1  
             vocabulary.add(word)
             words.append(word)
-        for bigram in ngrams(document,2):
-            bigram_freq[bigram] += 1
-        for trigram in ngrams(document,3):
-            trigram_freq[trigram] += 1 
+    #! Get df for every word
     for d in documents:
         for word in vocabulary:
             if tf[d][word]:df[word] += 1
+    #! Calculate the idf
     for word in vocabulary:
         idf[word] = math.log10(len(documents)/df[word])
+    #! Calculate the tf-idf
     for d in documents:
         for word in vocabulary:
             if tf[d][word]: tf_idf[d][word] = (1+math.log10(tf[d][word])) * idf[word]
@@ -97,8 +96,8 @@ if __name__ == "__main__":
                 unigram = list()
                 for i in aux:
                     unigram.append(i)
-                #! Unigram
                 max_results = 7
+                #! Unigram
                 unigram_sorted = list()
                 for word in unigram:
                     word_value = 0
