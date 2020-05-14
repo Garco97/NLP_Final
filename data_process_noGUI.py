@@ -5,12 +5,6 @@ import json
 from nltk import *
 from trie import *
 from collections import defaultdict
-from nanomsg import Socket, PAIR, PUB
-
-def connection():
-    global s1
-    s1 = Socket(PAIR)
-    s1.connect('ipc://127.0.0.1:54272')
 
 def get_contractions():
     global contractions
@@ -49,9 +43,8 @@ def clean_document(document):
     return new_document
 
 if __name__ == "__main__":
-    connection()
     #Nos situamos en el directorio del dataset
-    s1.send("Training")
+    print("Training")
     get_contractions()
     os.chdir("info")
     # Cogemos los ficheros del dataset
@@ -97,46 +90,46 @@ if __name__ == "__main__":
 
     trie = TrieSuggester()
     trie.index(vocabulary)
-    s1.send("Training finished")
-    query = s1.recv().decode("UTF-8")
-    while True:
-        if query != "":
-            query_words = query.split()
-            last_word = query_words[-1]
-            aux = trie.search(last_word)
-            if aux:
-                unigram = list()
-                for i in aux:
-                    unigram.append(i)
-                max_results = 7
-                #! Unigram
-                unigram_sorted = list()
-                for word in unigram:
-                    word_value = 0
-                    for d in documents:
-                        if word_value < tf_idf[d][word]: word_value = tf_idf[d][word]
-                    unigram_sorted.append((word,word_value))   
-                unigram_sorted.sort(key=lambda tup: tup[1], reverse=True)                 
-                unigram_sorted = unigram_sorted[:max_results]
-                s1.send("unigram")
-                unigram = list()
-                for word,value in unigram_sorted:
-                    s1.send(word)
-                    unigram.append(word)
-                #! Bigram
-                results = 0
-                for i,j in best_bigrams:  
-                    if i in unigram:
-                        s1.send(i + " " + j)
-                        results += 1
-                    if results is max_results: break
-                
-                #! Trigram 
-                results = 0
-                for i,j,t in best_trigrams:   
-                    if i in unigram:
-                        s1.send(i + " " + j + " " + t)
-                        results += 1
-                    if results is max_results: break
-            s1.send("THE END")
-        query = s1.recv().decode("UTF-8")
+    print("Training finished")
+    max_results = int(input("Enter how many results do you want:"))
+    query = input("Enter a word:")
+    while query != "":
+        query_words = query.split()
+        last_word = query_words[-1]
+        aux = trie.search(last_word)
+        if aux:
+            unigram = list()
+            for i in aux:
+                unigram.append(i)
+            #! Unigram
+            unigram_sorted = list()
+            for word in unigram:
+                word_value = 0
+                for d in documents:
+                    if word_value < tf_idf[d][word]: word_value = tf_idf[d][word]
+                unigram_sorted.append((word,word_value))   
+            unigram_sorted.sort(key=lambda tup: tup[1], reverse=True)                 
+            unigram_sorted = unigram_sorted[:max_results]
+            print("\nUnigrams:")
+            unigram = list()
+            for word,value in unigram_sorted:
+                print(word)
+                unigram.append(word)
+            print("\nBigrams:")
+            #! Bigram
+            results = 0
+            for i,j in best_bigrams:  
+                if i in unigram:
+                    print(i + " " + j)
+                    results += 1
+                if results is max_results: break
+            print("\nTrigrams:")
+
+            #! Trigram 
+            results = 0
+            for i,j,t in best_trigrams:   
+                if i in unigram:
+                    print(i + " " + j + " " + t)
+                    results += 1
+                if results is max_results: break
+        query = input("\nEnter a word:")
