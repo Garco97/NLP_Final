@@ -1,6 +1,14 @@
 # Star Wars Based AutoComplete
-## Instalación
+## Requirements
+Python3
+Node.JS
+## Version GUI
+### Instalación
 Ejecutar el fichero setup.sh con permisos de administrador
 
-## Ejecución
+### Ejecución
 npm start
+
+## Version terminal
+### Ejecución
+Ejecutar el fichero data_process_noGUI.py
